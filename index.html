@@ -1,0 +1,1120 @@
+here<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security Management Panel — Full Feature</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: { 950:'#050810', 900:'#0c101c', 850:'#121828', 800:'#181e30', 750:'#1e263c', 700:'#28324c' },
+            acc: { blue:'#3b82f6', green:'#10b981', yellow:'#f59e0b', red:'#ef4444', purple:'#8b5cf6', cyan:'#06b6d4', pink:'#ec4899', orange:'#f97316', lime:'#84cc16' }
+          },
+          fontFamily: { inter:['Inter','sans-serif'], mono:['JetBrains Mono','monospace'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    *{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0}
+    body{background:#0c101c;color:#e5e7eb;min-height:100vh;overflow:hidden}
+    .mono{font-family:'JetBrains Mono',monospace}
+    .glass{background:rgba(24,30,48,.65);backdrop-filter:blur(10px);border:1px solid rgba(75,85,99,.25);border-radius:12px}
+    .sidebar-link{transition:all .15s ease}
+    .sidebar-link:hover{background:rgba(59,130,246,.1);color:#93c5fd}
+    .sidebar-link.active{background:rgba(59,130,246,.15);color:#60a5fa;border-right:2px solid #3b82f6}
+    .page{display:none}
+    .page.active{display:block}
+    .progress-bar{transition:width .25s ease}
+    .toast{position:fixed;bottom:20px;right:20px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .25s ease}
+    .toast.show{transform:translateY(0);opacity:1}
+    .stat-card:hover{transform:translateY(-2px);transition:transform .2s ease}
+    .tab-btn.active{border-bottom:2px solid #3b82f6;color:#60a5fa}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-thumb{background:#374151;border-radius:3px}
+    .glow{box-shadow:0 0 12px rgba(59,130,246,.25)}
+    .glow-green{box-shadow:0 0 12px rgba(16,185,129,.25)}
+    .badge{font-size:10px;padding:2px 6px;border-radius:10px}
+  </style>
+</head>
+<body>
+  <div id="mainApp" class="flex h-screen overflow-hidden">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-60 bg-dark-900/90 border-r border-gray-700/50 flex flex-col shrink-0 fixed z-40 h-full -translate-x-full md:translate-x-0 transition-all">
+      <div class="p-3 border-b border-gray-700/50">
+        <div class="flex items-center justify-between">
+          <h1 class="text-lg font-bold text-acc-blue flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved"></i><span class="sidebar-text">SecPanel</span>
+          </h1>
+          <button id="closeSidebarMobile" class="md:hidden text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">v3.1 • No Splash • Full Feature</p>
+      </div>
+      <nav class="flex-1 overflow-y-auto p-2">
+        <ul class="space-y-1">
+          <li><a href="#dashboard" class="sidebar-link active flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="dashboard"><i class="fa-solid fa-chart-pie w-4 text-center"></i> <span class="sidebar-text">Dashboard</span></a></li>
+          <li><a href="#accounts" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="accounts"><i class="fa-solid fa-users w-4 text-center"></i> <span class="sidebar-text">Accounts</span></a></li>
+          <li><a href="#builder" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="builder"><i class="fa-solid fa-wand-magic-sparkles w-4 text-center"></i> <span class="sidebar-text">Page Builder</span></a></li>
+          <li><a href="#deployment" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="deployment"><i class="fa-solid fa-rocket w-4 text-center"></i> <span class="sidebar-text">Deployment</span></a></li>
+          <li><a href="#visitors" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="visitors"><i class="fa-solid fa-eye w-4 text-center"></i> <span class="sidebar-text">Visitors</span></a></li>
+          <li><a href="#activity" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="activity"><i class="fa-solid fa-timeline w-4 text-center"></i> <span class="sidebar-text">Activity Logs</span></a></li>
+          <li><a href="#devices" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="devices"><i class="fa-solid fa-mobile-screen w-4 text-center"></i> <span class="sidebar-text">Devices</span></a></li>
+          <li><a href="#analytics" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="analytics"><i class="fa-solid fa-chart-line w-4 text-center"></i> <span class="sidebar-text">Analytics</span></a></li>
+          <li><a href="#security" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="security"><i class="fa-solid fa-shield w-4 text-center"></i> <span class="sidebar-text">Security</span></a></li>
+          <li><a href="#database" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="database"><i class="fa-solid fa-database w-4 text-center"></i> <span class="sidebar-text">Database</span></a></li>
+          <li><a href="#reports" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="reports"><i class="fa-solid fa-file-chart-column w-4 text-center"></i> <span class="sidebar-text">Reports</span></a></li>
+          <li><a href="#console" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="console"><i class="fa-solid fa-terminal w-4 text-center"></i> <span class="sidebar-text">Console</span></a></li>
+          <li><a href="#files" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="files"><i class="fa-solid fa-folder-tree w-4 text-center"></i> <span class="sidebar-text">File Manager</span></a></li>
+          <li><a href="#network" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="network"><i class="fa-solid fa-network-wired w-4 text-center"></i> <span class="sidebar-text">Network</span></a></li>
+          <li><a href="#monitor" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="monitor"><i class="fa-solid fa-gauge-high w-4 text-center"></i> <span class="sidebar-text">System Monitor</span></a></li>
+          <li><a href="#alerts" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="alerts"><i class="fa-solid fa-triangle-exclamation w-4 text-center"></i> <span class="sidebar-text">Alerts</span></a></li>
+          <li><a href="#settings" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="settings"><i class="fa-solid fa-gear w-4 text-center"></i> <span class="sidebar-text">Settings</span></a></li>
+        </ul>
+      </nav>
+      <div class="p-3 border-t border-gray-700/50">
+        <div class="glass rounded-lg p-3 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-acc-blue/20 flex items-center justify-center text-acc-blue"><i class="fa-solid fa-user-shield"></i></div>
+            <div class="sidebar-text">
+              <p class="font-semibold text-sm">ADMIN_DEMO</p>
+              <p class="text-xs text-gray-400">Local Simulation</p>
+            </div>
+          </div>
+        </div>
+        <div class="text-xs text-gray-500 space-y-1 sidebar-text">
+          <p class="flex justify-between"><span>System</span><span class="text-acc-green">ONLINE</span></p>
+          <p class="flex justify-between"><span>Mode</span><span class="text-acc-yellow">SIMULATION</span></p>
+          <p class="flex justify-between"><span>Uptime</span><span id="sysUptime" class="mono">00:00:00</span></p>
+          <p class="flex justify-between"><span>Load</span><span id="sysLoad" class="text-acc-green">42%</span></p>
+          <p class="flex justify-between"><span>Memory</span><span class="text-acc-cyan">1.2 GB</span></p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- OVERLAY MOBILE -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-y-auto md:ml-60">
+      <!-- TOP NAV -->
+      <header class="sticky top-0 bg-dark-900/80 backdrop-blur-md border-b border-gray-700/50 px-4 py-3 flex items-center justify-between z-20">
+        <div class="flex items-center gap-3">
+          <button id="openSidebar" class="md:hidden text-gray-300"><i class="fa-solid fa-bars"></i></button>
+          <h2 id="pageTitle" class="font-semibold hidden md:block">Dashboard Overview</h2>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="currentTime" class="text-sm text-gray-400 mono">--:--:--</span>
+          <button id="refreshBtn" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-rotate"></i></button>
+          <button id="notifBtn" class="text-gray-400 hover:text-white relative text-sm">
+            <i class="fa-solid fa-bell"></i>
+            <span id="notifBadge" class="absolute -top-1 -right-1 w-4 h-4 bg-acc-red rounded-full text-[10px] flex items-center justify-center">4</span>
+          </button>
+          <button id="fullscreenBtn" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-expand"></i></button>
+        </div>
+      </header>
+
+      <!-- TOAST -->
+      <div id="toast" class="toast glass rounded-lg p-3 max-w-xs">
+        <p id="toastMsg" class="text-sm"></p>
+      </div>
+
+      <!-- ============= DASHBOARD ============= -->
+      <section id="page-dashboard" class="page active p-4 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+          <div>
+            <h2 class="text-2xl font-bold">Dashboard Overview</h2>
+            <p class="text-gray-400 text-sm">Simulation v3.1 — No Loading • All data fictional</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button class="bg-acc-green/10 text-acc-green px-3 py-2 rounded-lg text-sm hover:bg-acc-green/20 quick-action" data-a="account"><i class="fa-solid fa-plus mr-1"></i> New Account</button>
+            <button class="bg-acc-purple/10 text-acc-purple px-3 py-2 rounded-lg text-sm hover:bg-acc-purple/20 quick-action" data-a="report"><i class="fa-solid fa-file-chart mr-1"></i> Report</button>
+            <button class="bg-acc-cyan/10 text-acc-cyan px-3 py-2 rounded-lg text-sm hover:bg-acc-cyan/20 quick-action" data-a="export"><i class="fa-solid fa-download mr-1"></i> Export</button>
+            <button class="bg-gray-700/50 px-3 py-2 rounded-lg text-sm hover:bg-gray-700 quick-action" data-a="refresh"><i class="fa-solid fa-rotate mr-1"></i> Refresh</button>
+          </div>
+        </div>
+
+        <!-- STATS GRID -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Total Accounts</p>
+            <p class="text-2xl font-bold mt-1" id="statAccounts">1,428</p>
+            <p class="text-xs text-acc-green mt-1">+18 today</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Active Sessions</p>
+            <p class="text-2xl font-bold mt-1" id="statSessions">52</p>
+            <p class="text-xs text-acc-yellow mt-1">Live</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Visitors</p>
+            <p class="text-2xl font-bold mt-1" id="statVisitors">3,847</p>
+            <p class="text-xs text-acc-green mt-1">+22% week</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Success Rate</p>
+            <p class="text-2xl font-bold mt-1 text-acc-green" id="statSuccess">99.2%</p>
+            <p class="text-xs text-gray-400 mt-1">Simulation</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">System Health</p>
+            <p class="text-2xl font-bold mt-1 text-acc-green">99.9%</p>
+            <p class="text-xs text-gray-400 mt-1">All modules OK</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Generated Pages</p>
+            <p class="text-2xl font-bold mt-1" id="statPages">124</p>
+            <p class="text-xs text-gray-400 mt-1">Demo only</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Total Requests</p>
+            <p class="text-2xl font-bold mt-1" id="statRequests">12,893</p>
+            <p class="text-xs text-gray-400 mt-1">Simulated</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Avg Response</p>
+            <p class="text-2xl font-bold mt-1 mono text-acc-cyan">38ms</p>
+            <p class="text-xs text-gray-400 mt-1">Fast Load</p>
+          </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+          <div class="glass rounded-xl p-4 glow">
+            <h3 class="font-semibold mb-3">Activity — 24 Hours</h3>
+            <canvas id="chartActivity" height="170"></canvas>
+          </div>
+          <div class="glass rounded-xl p-4 glow-green">
+            <h3 class="font-semibold mb-3">Device Distribution</h3>
+            <canvas id="chartDevices" height="170"></canvas>
+          </div>
+        </div>
+
+        <!-- RECENT & STATUS -->
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="md:col-span-2 glass rounded-xl p-4">
+            <h3 class="font-semibold mb-3">Recent Events</h3>
+            <div id="recentEvents" class="space-y-2 text-sm max-h-60 overflow-y-auto"></div>
+          </div>
+          <div class="glass rounded-xl p-4">
+            <h3 class="font-semibold mb-3">System Status</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">Database</span><span class="text-acc-green">Local Demo</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Network</span><span class="text-acc-yellow">Simulated</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Data Collect</span><span class="text-acc-red">Blocked</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Export Mode</span><span class="text-acc-blue">Demo Only</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">API Status</span><span class="text-acc-green">Mock Active</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= ACCOUNTS ============= -->
+      <section id="page-accounts" class="page p-4 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+          <div>
+            <h2 class="text-2xl font-bold">Account Simulation</h2>
+            <p class="text-gray-400 text-sm">Fictional data — no real accounts</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button id="genAccBtn" class="bg-acc-green/10 text-acc-green px-3 py-2 rounded-lg text-sm hover:bg-acc-green/20"><i class="fa-solid fa-plus"></i> Generate</button>
+            <button id="gen10AccBtn" class="bg-acc-blue/10 text-acc-blue px-3 py-2 rounded-lg text-sm hover:bg-acc-blue/20"><i class="fa-solid fa-plus"></i> +10</button>
+            <button id="gen50AccBtn" class="bg-acc-purple/10 text-acc-purple px-3 py-2 rounded-lg text-sm hover:bg-acc-purple/20"><i class="fa-solid fa-plus"></i> +50</button>
+            <button id="clearAccBtn" class="bg-acc-red/10 text-acc-red px-3 py-2 rounded-lg text-sm hover:bg-acc-red/20"><i class="fa-solid fa-trash"></i> Clear</button>
+          </div>
+        </div>
+        <div class="glass rounded-xl p-3 mb-4 flex flex-wrap gap-3">
+          <input id="accSearch" type="text" placeholder="Search username..." class="bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2 text-sm flex-1 min-w-[150px]" />
+          <select id="accFilter" class="bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2 text-sm">
+            <option value="all">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Offline">Offline</option>
+            <option value="Suspicious">Suspicious</option>
+            <option value="Blocked">Blocked</option>
+          </select>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-dark-800/50 text-gray-400">
+                <tr>
+                  <th class="text-left p-3">Username</th>
+                  <th class="text-left p-3">Account ID</th>
+                  <th class="text-left p-3">Status</th>
+                  <th class="text-left p-3">Level</th>
+                  <th class="text-left p-3">Country</th>
+                  <th class="text-left p-3">Last Seen</th>
+                  <th class="text-left p-3">Risk</th>
+                  <th class="text-left p-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="accTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= PAGE BUILDER ============= -->
+      <section id="page-builder" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Page Builder — Simulation</h2>
+          <p class="text-gray-400 text-sm">Local preview — nothing sent externally</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-4">Configuration</h3>
+            <form id="builderForm" class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Page Name</label>
+                <input id="pbName" type="text" class="w-full bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2" placeholder="Demo Page" /></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Template</label>
+                <select id="pbTemplate" class="w-full bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2">
+                  <option>Social Login Demo</option><option>Game Account Demo</option>
+                  <option>Member Portal Demo</option><option>Verification Demo</option>
+                  <option>Payment Demo</option><option>Profile Demo</option>
+                  <option>Email Confirm Demo</option><option>Download Portal Demo</option>
+                </select></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Theme</label>
+                <select id="pbTheme" class="w-full bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2">
+                  <option>Dark Professional</option><option>Light Clean</option>
+                  <option>Purple Modern</option><option>Green Minimal</option>
+                  <option>Ocean Blue</option><option>Sunset Orange</option>
+                </select></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Custom Branding</label>
+                <input id="pbBrand" type="text" class="w-full bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2" placeholder="Optional: Brand Name" /></div>
+              <div class="bg-acc-green/10 border border-acc-green/30 rounded-lg p-3 text-xs text-acc-green">
+                <i class="fa-solid fa-shield-halved"></i> All data stays local — nothing sent externally
+              </div>
+              <button type="submit" class="w-full bg-acc-blue py-2.5 rounded-lg font-medium hover:bg-acc-blue/90">
+                <i class="fa-solid fa-hammer"></i> Build Demo Page
+              </button>
+            </form>
+          </div>
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-4">Build Output</h3>
+            <div id="buildIdle" class="text-center py-10 text-gray-500">
+              <i class="fa-solid fa-code text-3xl mb-2 opacity-30"></i>
+              <p>Fill form & click Build to start</p>
+            </div>
+            <div id="buildProcess" class="hidden">
+              <p id="buildStep" class="text-sm mono text-acc-blue mb-2">Initializing...</p>
+              <div class="w-full h-2 bg-dark-800 rounded-full mb-3">
+                <div id="buildBar" class="h-full bg-acc-blue progress-bar rounded-full" style="width:0%"></div>
+              </div>
+              <div id="buildLog" class="bg-dark-800/50 rounded-lg p-3 text-xs mono max-h-40 overflow-y-auto"></div>
+            </div>
+            <div id="buildResult" class="hidden text-center py-4">
+              <i class="fa-solid fa-circle-check text-acc-green text-3xl mb-2"></i>
+              <h4 class="font-bold text-acc-green">BUILD COMPLETED</h4>
+              <p class="text-sm text-gray-400 mt-1">Page ID:</p>
+              <p id="pageIdOut" class="mono text-acc-blue font-bold text-lg mt-1"></p>
+              <div class="flex gap-2 mt-4">
+                <button id="copyPageId" class="flex-1 bg-gray-700/50 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fa-solid fa-copy"></i> Copy ID</button>
+                <button id="previewPage" class="flex-1 bg-acc-green/10 text-acc-green py-2 rounded-lg text-sm hover:bg-acc-green/20"><i class="fa-solid fa-eye"></i> Preview</button>
+                <button id="newBuild" class="flex-1 bg-acc-purple/10 text-acc-purple py-2 rounded-lg text-sm hover:bg-acc-purple/20"><i class="fa-solid fa-plus"></i> New</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= DEPLOYMENT ============= -->
+      <section id="page-deployment" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Deployment Simulation</h2>
+          <p class="text-gray-400 text-sm">Local only — no real server</p>
+        </div>
+        <div class="grid md:grid-cols-4 gap-4 mb-6">
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Environment</p><p class="font-bold mt-1">Local Browser</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Build ID</p><p class="font-bold mt-1 mono" id="depBuildId">BLD-260920-001</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Status</p><p class="font-bold mt-1 text-acc-yellow" id="depStatus">STOPPED</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Uptime</p><p class="font-bold mt-1 mono" id="depUptime">--:--:--</p></div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <div class="flex flex-wrap gap-3 mb-4">
+            <button id="depStart" class="bg-acc-green/10 text-acc-green px-4 py-2.5 rounded-lg font-medium hover:bg-acc-green/20"><i class="fa-solid fa-play"></i> START</button>
+            <button id="depStop" class="bg-acc-red/10 text-acc-red px-4 py-2.5 rounded-lg font-medium hover:bg-acc-red/20" disabled><i class="fa-solid fa-stop"></i> STOP</button>
+            <button id="depRestart" class="bg-acc-yellow/10 text-acc-yellow px-4 py-2.5 rounded-lg font-medium hover:bg-acc-yellow/20" disabled><i class="fa-solid fa-rotate"></i> RESTART</button>
+            <button id="depCheck" class="bg-gray-700/50 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-700"><i class="fa-solid fa-check"></i> STATUS</button>
+          </div>
+          <div id="depProgress" class="hidden">
+            <p id="depStep" class="text-sm mono text-acc-blue mb-2">Starting...</p>
+            <div class="w-full h-2 bg-dark-800 rounded-full mb-3">
+              <div id="depBar" class="h-full bg-acc-green progress-bar rounded-full" style="width:0%"></div>
+            </div>
+            <div id="depLog" class="bg-dark-800/50 rounded-lg p-3 text-xs mono max-h-32 overflow-y-auto"></div>
+          </div>
+          <div id="depResult" class="hidden mt-4">
+            <div class="flex items-center gap-3 p-3 bg-acc-green/10 border border-acc-green/30 rounded-lg">
+              <div class="w-10 h-10 rounded-full bg-acc-green/20 flex items-center justify-center text-acc-green"><i class="fa-solid fa-check"></i></div>
+              <div><p class="font-bold text-acc-green">SYSTEM RUNNING</p><p class="text-sm text-gray-400">Local simulation active</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= VISITORS ============= -->
+      <section id="page-visitors" class="page p-4 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+          <div>
+            <h2 class="text-2xl font-bold">Visitor Simulation</h2>
+            <p class="text-gray-400 text-sm">All records fictional</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button id="gen1Vis" class="bg-acc-green/10 text-acc-green px-3 py-2 rounded-lg text-sm hover:bg-acc-green/20"><i class="fa-solid fa-plus"></i> Add</button>
+            <button id="gen10Vis" class="bg-acc-blue/10 text-acc-blue px-3 py-2 rounded-lg text-sm hover:bg-acc-blue/20"><i class="fa-solid fa-plus"></i> +10</button>
+            <button id="gen50Vis" class="bg-acc-purple/10 text-acc-purple px-3 py-2 rounded-lg text-sm hover:bg-acc-purple/20"><i class="fa-solid fa-plus"></i> +50</button>
+            <button id="clearVis" class="bg-acc-red/10 text-acc-red px-3 py-2 rounded-lg text-sm hover:bg-acc-red/20"><i class="fa-solid fa-trash"></i> Clear</button>
+          </div>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-dark-800/50 text-gray-400">
+                <tr>
+                  <th class="text-left p-3">Visitor ID</th><th class="text-left p-3">Country</th><th class="text-left p-3">Device</th>
+                  <th class="text-left p-3">Browser</th><th class="text-left p-3">Duration</th><th class="text-left p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="visTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= ACTIVITY LOGS ============= -->
+      <section id="page-activity" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Activity Logs</h2>
+          <p class="text-gray-400 text-sm">System events timeline</p>
+        </div>
+        <div class="flex flex-wrap gap-1 mb-4 border-b border-gray-700/50">
+          <button class="tab-btn active px-3 py-2 text-sm" data-f="all">All</button>
+          <button class="tab-btn px-3 py-2 text-sm" data-f="system">System</button>
+          <button class="tab-btn px-3 py-2 text-sm" data-f="success">Success</button>
+          <button class="tab-btn px-3 py-2 text-sm" data-f="warning">Warning</button>
+          <button class="tab-btn px-3 py-2 text-sm" data-f="error">Error</button>
+        </div>
+        <div class="glass rounded-xl p-4 max-h-[500px] overflow-y-auto">
+          <div id="logEntries" class="space-y-2 text-sm"></div>
+        </div>
+      </section>
+
+      <!-- ============= DEVICES ============= -->
+      <section id="page-devices" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Device Center</h2>
+          <p class="text-gray-400 text-sm">Simulated devices</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+          <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-3">Platforms</h3><canvas id="chartPlatform" height="180"></canvas></div>
+          <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-3">Browsers</h3><canvas id="chartBrowser" height="180"></canvas></div>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-dark-800/50 text-gray-400">
+                <tr>
+                  <th class="text-left p-3">Device ID</th><th class="text-left p-3">Platform</th><th class="text-left p-3">OS</th>
+                  <th class="text-left p-3">Browser</th><th class="text-left p-3">Resolution</th><th class="text-left p-3">Last Seen</th><th class="text-left p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="devTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= ANALYTICS ============= -->
+      <section id="page-analytics" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Analytics</h2>
+          <p class="text-gray-400 text-sm">Statistics based on simulated data</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Today Visitors</p><p class="text-xl font-bold mt-1" id="aToday">3,847</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Weekly</p><p class="text-xl font-bold mt-1" id="aWeekly">22,489</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Avg Session</p><p class="text-xl font-bold mt-1">7m 12s</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Bounce Rate</p><p class="text-xl font-bold mt-1 text-acc-yellow">18.2%</p></div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-3">7-Day Activity</h3><canvas id="chart7d" height="180"></canvas></div>
+          <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-3">Top Countries</h3><canvas id="chartCountry" height="180"></canvas></div>
+        </div>
+      </section>
+
+      <!-- ============= SECURITY ============= -->
+      <section id="page-security" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Security Center</h2>
+          <p class="text-gray-400 text-sm">Simulation environment status</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-4">System Status</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between items-center"><span class="text-gray-400">System Health</span><span class="text-acc-green">99.9%</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">Firewall</span><span class="text-acc-green">ACTIVE</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">Data Encryption</span><span class="text-acc-green">AES-256</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">External Access</span><span class="text-acc-red">BLOCKED</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">Data Collection</span><span class="text-acc-red">DISABLED</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">Mode</span><span class="text-acc-yellow">SIMULATION ONLY</span></div>
+            </div>
+          </div>
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-4">Security Checks</h3>
+            <div class="space-y-3 text-sm">
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> Integrity check passed</p>
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> Simulation env verified</p>
+              <p class="text-acc-yellow"><i class="fa-solid fa-info-circle mr-2"></i> No external connection — expected</p>
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> Local storage secured</p>
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> No sensitive data collected</p>
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> CSP headers active</p>
+            </div>
+          </div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <h3 class="font-semibold mb-4">Threat Detection</h3>
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="text-center p-3 bg-acc-green/10 rounded-lg">
+              <p class="text-2xl font-bold text-acc-green">0</p>
+              <p class="text-xs text-gray-400">Active Threats</p>
+            </div>
+            <div class="text-center p-3 bg-acc-yellow/10 rounded-lg">
+              <p class="text-2xl font-bold text-acc-yellow">3</p>
+              <p class="text-xs text-gray-400">Warnings</p>
+            </div>
+            <div class="text-center p-3 bg-acc-blue/10 rounded-lg">
+              <p class="text-2xl font-bold text-acc-blue">12</p>
+              <p class="text-xs text-gray-400">Events Monitored</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= DATABASE ============= -->
+      <section id="page-database" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Database Center</h2>
+          <p class="text-gray-400 text-sm">Local demo storage</p>
+        </div>
+        <div class="grid md:grid-cols-4 gap-4 mb-6">
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Status</p><p class="font-bold mt-1 text-acc-green">LOCAL DEMO</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Records</p><p class="font-bold mt-1" id="dbRecs">5,423</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Storage</p><p class="font-bold mt-1">3.8 MB</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Last Sync</p><p class="font-bold mt-1">Just now</p></div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <h3 class="font-semibold mb-4">Collections</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-users text-acc-blue mr-2"></i> Accounts</span>
+              <span class="text-sm text-gray-400" id="colAcc">1,428</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-eye text-acc-green mr-2"></i> Visitors</span>
+              <span class="text-sm text-gray-400" id="colVis">3,847</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-mobile-screen text-acc-purple mr-2"></i> Devices</span>
+              <span class="text-sm text-gray-400" id="colDev">1,205</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-file-code text-acc-yellow mr-2"></i> Pages</span>
+              <span class="text-sm text-gray-400" id="colPages">124</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-clock-rotate-left text-acc-cyan mr-2"></i> Logs</span>
+              <span class="text-sm text-gray-400">12,893</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-5">
+            <button id="dbClear" class="bg-acc-red/10 text-acc-red px-3 py-2 rounded-lg text-sm hover:bg-acc-red/20"><i class="fa-solid fa-database"></i> Clear All</button>
+            <button id="dbExport" class="bg-acc-blue/10 text-acc-blue px-3 py-2 rounded-lg text-sm hover:bg-acc-blue/20"><i class="fa-solid fa-download"></i> Export JSON</button>
+            <button id="dbImport" class="bg-acc-green/10 text-acc-green px-3 py-2 rounded-lg text-sm hover:bg-acc-green/20"><i class="fa-solid fa-upload"></i> Import</button>
+            <button id="dbRefresh" class="bg-gray-700/50 px-3 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fa-solid fa-rotate"></i> Refresh</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= REPORTS ============= -->
+      <section id="page-reports" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Report Center</h2>
+          <p class="text-gray-400 text-sm">Generate demo reports instantly</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-3">Available Reports</h3>
+            <div class="space-y-3">
+              <div class="p-3 bg-dark-800/50 rounded-lg flex justify-between items-center">
+                <span>Daily Activity Summary</span>
+                <button class="gen-report bg-acc-blue/10 text-acc-blue px-2 py-1 rounded text-xs" data-t="daily">Generate</button>
+              </div>
+              <div class="p-3 bg-dark-800/50 rounded-lg flex justify-between items-center">
+                <span>Weekly Analytics</span>
+                <button class
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security Management Panel — Full Feature</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: { 950:'#050810', 900:'#0c101c', 850:'#121828', 800:'#181e30', 750:'#1e263c', 700:'#28324c' },
+            acc: { blue:'#3b82f6', green:'#10b981', yellow:'#f59e0b', red:'#ef4444', purple:'#8b5cf6', cyan:'#06b6d4', pink:'#ec4899', orange:'#f97316', lime:'#84cc16' }
+          },
+          fontFamily: { inter:['Inter','sans-serif'], mono:['JetBrains Mono','monospace'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    *{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0}
+    body{background:#0c101c;color:#e5e7eb;min-height:100vh;overflow:hidden}
+    .mono{font-family:'JetBrains Mono',monospace}
+    .glass{background:rgba(24,30,48,.65);backdrop-filter:blur(10px);border:1px solid rgba(75,85,99,.25);border-radius:12px}
+    .sidebar-link{transition:all .15s ease}
+    .sidebar-link:hover{background:rgba(59,130,246,.1);color:#93c5fd}
+    .sidebar-link.active{background:rgba(59,130,246,.15);color:#60a5fa;border-right:2px solid #3b82f6}
+    .page{display:none}
+    .page.active{display:block}
+    .progress-bar{transition:width .25s ease}
+    .toast{position:fixed;bottom:20px;right:20px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .25s ease}
+    .toast.show{transform:translateY(0);opacity:1}
+    .stat-card:hover{transform:translateY(-2px);transition:transform .2s ease}
+    .tab-btn.active{border-bottom:2px solid #3b82f6;color:#60a5fa}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-thumb{background:#374151;border-radius:3px}
+    .glow{box-shadow:0 0 12px rgba(59,130,246,.25)}
+    .glow-green{box-shadow:0 0 12px rgba(16,185,129,.25)}
+    .badge{font-size:10px;padding:2px 6px;border-radius:10px}
+  </style>
+</head>
+<body>
+  <div id="mainApp" class="flex h-screen overflow-hidden">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-60 bg-dark-900/90 border-r border-gray-700/50 flex flex-col shrink-0 fixed z-40 h-full -translate-x-full md:translate-x-0 transition-all">
+      <div class="p-3 border-b border-gray-700/50">
+        <div class="flex items-center justify-between">
+          <h1 class="text-lg font-bold text-acc-blue flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved"></i><span class="sidebar-text">SecPanel</span>
+          </h1>
+          <button id="closeSidebarMobile" class="md:hidden text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">v3.1 • No Splash • Full Feature</p>
+      </div>
+      <nav class="flex-1 overflow-y-auto p-2">
+        <ul class="space-y-1">
+          <li><a href="#dashboard" class="sidebar-link active flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="dashboard"><i class="fa-solid fa-chart-pie w-4 text-center"></i> <span class="sidebar-text">Dashboard</span></a></li>
+          <li><a href="#accounts" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="accounts"><i class="fa-solid fa-users w-4 text-center"></i> <span class="sidebar-text">Accounts</span></a></li>
+          <li><a href="#builder" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="builder"><i class="fa-solid fa-wand-magic-sparkles w-4 text-center"></i> <span class="sidebar-text">Page Builder</span></a></li>
+          <li><a href="#deployment" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="deployment"><i class="fa-solid fa-rocket w-4 text-center"></i> <span class="sidebar-text">Deployment</span></a></li>
+          <li><a href="#visitors" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="visitors"><i class="fa-solid fa-eye w-4 text-center"></i> <span class="sidebar-text">Visitors</span></a></li>
+          <li><a href="#activity" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="activity"><i class="fa-solid fa-timeline w-4 text-center"></i> <span class="sidebar-text">Activity Logs</span></a></li>
+          <li><a href="#devices" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="devices"><i class="fa-solid fa-mobile-screen w-4 text-center"></i> <span class="sidebar-text">Devices</span></a></li>
+          <li><a href="#analytics" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="analytics"><i class="fa-solid fa-chart-line w-4 text-center"></i> <span class="sidebar-text">Analytics</span></a></li>
+          <li><a href="#security" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="security"><i class="fa-solid fa-shield w-4 text-center"></i> <span class="sidebar-text">Security</span></a></li>
+          <li><a href="#database" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="database"><i class="fa-solid fa-database w-4 text-center"></i> <span class="sidebar-text">Database</span></a></li>
+          <li><a href="#reports" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="reports"><i class="fa-solid fa-file-chart-column w-4 text-center"></i> <span class="sidebar-text">Reports</span></a></li>
+          <li><a href="#console" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="console"><i class="fa-solid fa-terminal w-4 text-center"></i> <span class="sidebar-text">Console</span></a></li>
+          <li><a href="#files" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="files"><i class="fa-solid fa-folder-tree w-4 text-center"></i> <span class="sidebar-text">File Manager</span></a></li>
+          <li><a href="#network" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="network"><i class="fa-solid fa-network-wired w-4 text-center"></i> <span class="sidebar-text">Network</span></a></li>
+          <li><a href="#monitor" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="monitor"><i class="fa-solid fa-gauge-high w-4 text-center"></i> <span class="sidebar-text">System Monitor</span></a></li>
+          <li><a href="#alerts" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="alerts"><i class="fa-solid fa-triangle-exclamation w-4 text-center"></i> <span class="sidebar-text">Alerts</span></a></li>
+          <li><a href="#settings" class="sidebar-link flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" data-page="settings"><i class="fa-solid fa-gear w-4 text-center"></i> <span class="sidebar-text">Settings</span></a></li>
+        </ul>
+      </nav>
+      <div class="p-3 border-t border-gray-700/50">
+        <div class="glass rounded-lg p-3 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-acc-blue/20 flex items-center justify-center text-acc-blue"><i class="fa-solid fa-user-shield"></i></div>
+            <div class="sidebar-text">
+              <p class="font-semibold text-sm">ADMIN_DEMO</p>
+              <p class="text-xs text-gray-400">Local Simulation</p>
+            </div>
+          </div>
+        </div>
+        <div class="text-xs text-gray-500 space-y-1 sidebar-text">
+          <p class="flex justify-between"><span>System</span><span class="text-acc-green">ONLINE</span></p>
+          <p class="flex justify-between"><span>Mode</span><span class="text-acc-yellow">SIMULATION</span></p>
+          <p class="flex justify-between"><span>Uptime</span><span id="sysUptime" class="mono">00:00:00</span></p>
+          <p class="flex justify-between"><span>Load</span><span id="sysLoad" class="text-acc-green">42%</span></p>
+          <p class="flex justify-between"><span>Memory</span><span class="text-acc-cyan">1.2 GB</span></p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- OVERLAY MOBILE -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-y-auto md:ml-60">
+      <!-- TOP NAV -->
+      <header class="sticky top-0 bg-dark-900/80 backdrop-blur-md border-b border-gray-700/50 px-4 py-3 flex items-center justify-between z-20">
+        <div class="flex items-center gap-3">
+          <button id="openSidebar" class="md:hidden text-gray-300"><i class="fa-solid fa-bars"></i></button>
+          <h2 id="pageTitle" class="font-semibold hidden md:block">Dashboard Overview</h2>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="currentTime" class="text-sm text-gray-400 mono">--:--:--</span>
+          <button id="refreshBtn" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-rotate"></i></button>
+          <button id="notifBtn" class="text-gray-400 hover:text-white relative text-sm">
+            <i class="fa-solid fa-bell"></i>
+            <span id="notifBadge" class="absolute -top-1 -right-1 w-4 h-4 bg-acc-red rounded-full text-[10px] flex items-center justify-center">4</span>
+          </button>
+          <button id="fullscreenBtn" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-expand"></i></button>
+        </div>
+      </header>
+
+      <!-- TOAST -->
+      <div id="toast" class="toast glass rounded-lg p-3 max-w-xs">
+        <p id="toastMsg" class="text-sm"></p>
+      </div>
+
+      <!-- ============= DASHBOARD ============= -->
+      <section id="page-dashboard" class="page active p-4 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+          <div>
+            <h2 class="text-2xl font-bold">Dashboard Overview</h2>
+            <p class="text-gray-400 text-sm">Simulation v3.1 — No Loading • All data fictional</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button class="bg-acc-green/10 text-acc-green px-3 py-2 rounded-lg text-sm hover:bg-acc-green/20 quick-action" data-a="account"><i class="fa-solid fa-plus mr-1"></i> New Account</button>
+            <button class="bg-acc-purple/10 text-acc-purple px-3 py-2 rounded-lg text-sm hover:bg-acc-purple/20 quick-action" data-a="report"><i class="fa-solid fa-file-chart mr-1"></i> Report</button>
+            <button class="bg-acc-cyan/10 text-acc-cyan px-3 py-2 rounded-lg text-sm hover:bg-acc-cyan/20 quick-action" data-a="export"><i class="fa-solid fa-download mr-1"></i> Export</button>
+            <button class="bg-gray-700/50 px-3 py-2 rounded-lg text-sm hover:bg-gray-700 quick-action" data-a="refresh"><i class="fa-solid fa-rotate mr-1"></i> Refresh</button>
+          </div>
+        </div>
+
+        <!-- STATS GRID -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Total Accounts</p>
+            <p class="text-2xl font-bold mt-1" id="statAccounts">1,428</p>
+            <p class="text-xs text-acc-green mt-1">+18 today</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Active Sessions</p>
+            <p class="text-2xl font-bold mt-1" id="statSessions">52</p>
+            <p class="text-xs text-acc-yellow mt-1">Live</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Visitors</p>
+            <p class="text-2xl font-bold mt-1" id="statVisitors">3,847</p>
+            <p class="text-xs text-acc-green mt-1">+22% week</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Success Rate</p>
+            <p class="text-2xl font-bold mt-1 text-acc-green" id="statSuccess">99.2%</p>
+            <p class="text-xs text-gray-400 mt-1">Simulation</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">System Health</p>
+            <p class="text-2xl font-bold mt-1 text-acc-green">99.9%</p>
+            <p class="text-xs text-gray-400 mt-1">All modules OK</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Generated Pages</p>
+            <p class="text-2xl font-bold mt-1" id="statPages">124</p>
+            <p class="text-xs text-gray-400 mt-1">Demo only</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Total Requests</p>
+            <p class="text-2xl font-bold mt-1" id="statRequests">12,893</p>
+            <p class="text-xs text-gray-400 mt-1">Simulated</p>
+          </div>
+          <div class="glass rounded-xl p-4 stat-card">
+            <p class="text-gray-400 text-xs uppercase">Avg Response</p>
+            <p class="text-2xl font-bold mt-1 mono text-acc-cyan">38ms</p>
+            <p class="text-xs text-gray-400 mt-1">Fast Load</p>
+          </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+          <div class="glass rounded-xl p-4 glow">
+            <h3 class="font-semibold mb-3">Activity — 24 Hours</h3>
+            <canvas id="chartActivity" height="170"></canvas>
+          </div>
+          <div class="glass rounded-xl p-4 glow-green">
+            <h3 class="font-semibold mb-3">Device Distribution</h3>
+            <canvas id="chartDevices" height="170"></canvas>
+          </div>
+        </div>
+
+        <!-- RECENT & STATUS -->
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="md:col-span-2 glass rounded-xl p-4">
+            <h3 class="font-semibold mb-3">Recent Events</h3>
+            <div id="recentEvents" class="space-y-2 text-sm max-h-60 overflow-y-auto"></div>
+          </div>
+          <div class="glass rounded-xl p-4">
+            <h3 class="font-semibold mb-3">System Status</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">Database</span><span class="text-acc-green">Local Demo</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Network</span><span class="text-acc-yellow">Simulated</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Data Collect</span><span class="text-acc-red">Blocked</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Export Mode</span><span class="text-acc-blue">Demo Only</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">API Status</span><span class="text-acc-green">Mock Active</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= ACCOUNTS ============= -->
+      <section id="page-accounts" class="page p-4 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+          <div>
+            <h2 class="text-2xl font-bold">Account Simulation</h2>
+            <p class="text-gray-400 text-sm">Fictional data — no real accounts</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button id="genAccBtn" class="bg-acc-green/10 text-acc-green px-3 py-2 rounded-lg text-sm hover:bg-acc-green/20"><i class="fa-solid fa-plus"></i> Generate</button>
+            <button id="gen10AccBtn" class="bg-acc-blue/10 text-acc-blue px-3 py-2 rounded-lg text-sm hover:bg-acc-blue/20"><i class="fa-solid fa-plus"></i> +10</button>
+            <button id="gen50AccBtn" class="bg-acc-purple/10 text-acc-purple px-3 py-2 rounded-lg text-sm hover:bg-acc-purple/20"><i class="fa-solid fa-plus"></i> +50</button>
+            <button id="clearAccBtn" class="bg-acc-red/10 text-acc-red px-3 py-2 rounded-lg text-sm hover:bg-acc-red/20"><i class="fa-solid fa-trash"></i> Clear</button>
+          </div>
+        </div>
+        <div class="glass rounded-xl p-3 mb-4 flex flex-wrap gap-3">
+          <input id="accSearch" type="text" placeholder="Search username..." class="bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2 text-sm flex-1 min-w-[150px]" />
+          <select id="accFilter" class="bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2 text-sm">
+            <option value="all">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Offline">Offline</option>
+            <option value="Suspicious">Suspicious</option>
+            <option value="Blocked">Blocked</option>
+          </select>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-dark-800/50 text-gray-400">
+                <tr>
+                  <th class="text-left p-3">Username</th>
+                  <th class="text-left p-3">Account ID</th>
+                  <th class="text-left p-3">Status</th>
+                  <th class="text-left p-3">Level</th>
+                  <th class="text-left p-3">Country</th>
+                  <th class="text-left p-3">Last Seen</th>
+                  <th class="text-left p-3">Risk</th>
+                  <th class="text-left p-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="accTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= PAGE BUILDER ============= -->
+      <section id="page-builder" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Page Builder — Simulation</h2>
+          <p class="text-gray-400 text-sm">Local preview — nothing sent externally</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-4">Configuration</h3>
+            <form id="builderForm" class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Page Name</label>
+                <input id="pbName" type="text" class="w-full bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2" placeholder="Demo Page" /></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Template</label>
+                <select id="pbTemplate" class="w-full bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2">
+                  <option>Social Login Demo</option><option>Game Account Demo</option>
+                  <option>Member Portal Demo</option><option>Verification Demo</option>
+                  <option>Payment Demo</option><option>Profile Demo</option>
+                  <option>Email Confirm Demo</option><option>Download Portal Demo</option>
+                </select></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Theme</label>
+                <select id="pbTheme" class="w-full bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2">
+                  <option>Dark Professional</option><option>Light Clean</option>
+                  <option>Purple Modern</option><option>Green Minimal</option>
+                  <option>Ocean Blue</option><option>Sunset Orange</option>
+                </select></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Custom Branding</label>
+                <input id="pbBrand" type="text" class="w-full bg-dark-800 border border-gray-700/50 rounded-lg px-3 py-2" placeholder="Optional: Brand Name" /></div>
+              <div class="bg-acc-green/10 border border-acc-green/30 rounded-lg p-3 text-xs text-acc-green">
+                <i class="fa-solid fa-shield-halved"></i> All data stays local — nothing sent externally
+              </div>
+              <button type="submit" class="w-full bg-acc-blue py-2.5 rounded-lg font-medium hover:bg-acc-blue/90">
+                <i class="fa-solid fa-hammer"></i> Build Demo Page
+              </button>
+            </form>
+          </div>
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-4">Build Output</h3>
+            <div id="buildIdle" class="text-center py-10 text-gray-500">
+              <i class="fa-solid fa-code text-3xl mb-2 opacity-30"></i>
+              <p>Fill form & click Build to start</p>
+            </div>
+            <div id="buildProcess" class="hidden">
+              <p id="buildStep" class="text-sm mono text-acc-blue mb-2">Initializing...</p>
+              <div class="w-full h-2 bg-dark-800 rounded-full mb-3">
+                <div id="buildBar" class="h-full bg-acc-blue progress-bar rounded-full" style="width:0%"></div>
+              </div>
+              <div id="buildLog" class="bg-dark-800/50 rounded-lg p-3 text-xs mono max-h-40 overflow-y-auto"></div>
+            </div>
+            <div id="buildResult" class="hidden text-center py-4">
+              <i class="fa-solid fa-circle-check text-acc-green text-3xl mb-2"></i>
+              <h4 class="font-bold text-acc-green">BUILD COMPLETED</h4>
+              <p class="text-sm text-gray-400 mt-1">Page ID:</p>
+              <p id="pageIdOut" class="mono text-acc-blue font-bold text-lg mt-1"></p>
+              <div class="flex gap-2 mt-4">
+                <button id="copyPageId" class="flex-1 bg-gray-700/50 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fa-solid fa-copy"></i> Copy ID</button>
+                <button id="previewPage" class="flex-1 bg-acc-green/10 text-acc-green py-2 rounded-lg text-sm hover:bg-acc-green/20"><i class="fa-solid fa-eye"></i> Preview</button>
+                <button id="newBuild" class="flex-1 bg-acc-purple/10 text-acc-purple py-2 rounded-lg text-sm hover:bg-acc-purple/20"><i class="fa-solid fa-plus"></i> New</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= DEPLOYMENT ============= -->
+      <section id="page-deployment" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Deployment Simulation</h2>
+          <p class="text-gray-400 text-sm">Local only — no real server</p>
+        </div>
+        <div class="grid md:grid-cols-4 gap-4 mb-6">
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Environment</p><p class="font-bold mt-1">Local Browser</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Build ID</p><p class="font-bold mt-1 mono" id="depBuildId">BLD-260920-001</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Status</p><p class="font-bold mt-1 text-acc-yellow" id="depStatus">STOPPED</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Uptime</p><p class="font-bold mt-1 mono" id="depUptime">--:--:--</p></div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <div class="flex flex-wrap gap-3 mb-4">
+            <button id="depStart" class="bg-acc-green/10 text-acc-green px-4 py-2.5 rounded-lg font-medium hover:bg-acc-green/20"><i class="fa-solid fa-play"></i> START</button>
+            <button id="depStop" class="bg-acc-red/10 text-acc-red px-4 py-2.5 rounded-lg font-medium hover:bg-acc-red/20" disabled><i class="fa-solid fa-stop"></i> STOP</button>
+            <button id="depRestart" class="bg-acc-yellow/10 text-acc-yellow px-4 py-2.5 rounded-lg font-medium hover:bg-acc-yellow/20" disabled><i class="fa-solid fa-rotate"></i> RESTART</button>
+            <button id="depCheck" class="bg-gray-700/50 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-700"><i class="fa-solid fa-check"></i> STATUS</button>
+          </div>
+          <div id="depProgress" class="hidden">
+            <p id="depStep" class="text-sm mono text-acc-blue mb-2">Starting...</p>
+            <div class="w-full h-2 bg-dark-800 rounded-full mb-3">
+              <div id="depBar" class="h-full bg-acc-green progress-bar rounded-full" style="width:0%"></div>
+            </div>
+            <div id="depLog" class="bg-dark-800/50 rounded-lg p-3 text-xs mono max-h-32 overflow-y-auto"></div>
+          </div>
+          <div id="depResult" class="hidden mt-4">
+            <div class="flex items-center gap-3 p-3 bg-acc-green/10 border border-acc-green/30 rounded-lg">
+              <div class="w-10 h-10 rounded-full bg-acc-green/20 flex items-center justify-center text-acc-green"><i class="fa-solid fa-check"></i></div>
+              <div><p class="font-bold text-acc-green">SYSTEM RUNNING</p><p class="text-sm text-gray-400">Local simulation active</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= VISITORS ============= -->
+      <section id="page-visitors" class="page p-4 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+          <div>
+            <h2 class="text-2xl font-bold">Visitor Simulation</h2>
+            <p class="text-gray-400 text-sm">All records fictional</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button id="gen1Vis" class="bg-acc-green/10 text-acc-green px-3 py-2 rounded-lg text-sm hover:bg-acc-green/20"><i class="fa-solid fa-plus"></i> Add</button>
+            <button id="gen10Vis" class="bg-acc-blue/10 text-acc-blue px-3 py-2 rounded-lg text-sm hover:bg-acc-blue/20"><i class="fa-solid fa-plus"></i> +10</button>
+            <button id="gen50Vis" class="bg-acc-purple/10 text-acc-purple px-3 py-2 rounded-lg text-sm hover:bg-acc-purple/20"><i class="fa-solid fa-plus"></i> +50</button>
+            <button id="clearVis" class="bg-acc-red/10 text-acc-red px-3 py-2 rounded-lg text-sm hover:bg-acc-red/20"><i class="fa-solid fa-trash"></i> Clear</button>
+          </div>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-dark-800/50 text-gray-400">
+                <tr>
+                  <th class="text-left p-3">Visitor ID</th><th class="text-left p-3">Country</th><th class="text-left p-3">Device</th>
+                  <th class="text-left p-3">Browser</th><th class="text-left p-3">Duration</th><th class="text-left p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="visTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= ACTIVITY LOGS ============= -->
+      <section id="page-activity" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Activity Logs</h2>
+          <p class="text-gray-400 text-sm">System events timeline</p>
+        </div>
+        <div class="flex flex-wrap gap-1 mb-4 border-b border-gray-700/50">
+          <button class="tab-btn active px-3 py-2 text-sm" data-f="all">All</button>
+          <button class="tab-btn px-3 py-2 text-sm" data-f="system">System</button>
+          <button class="tab-btn px-3 py-2 text-sm" data-f="success">Success</button>
+          <button class="tab-btn px-3 py-2 text-sm" data-f="warning">Warning</button>
+          <button class="tab-btn px-3 py-2 text-sm" data-f="error">Error</button>
+        </div>
+        <div class="glass rounded-xl p-4 max-h-[500px] overflow-y-auto">
+          <div id="logEntries" class="space-y-2 text-sm"></div>
+        </div>
+      </section>
+
+      <!-- ============= DEVICES ============= -->
+      <section id="page-devices" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Device Center</h2>
+          <p class="text-gray-400 text-sm">Simulated devices</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+          <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-3">Platforms</h3><canvas id="chartPlatform" height="180"></canvas></div>
+          <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-3">Browsers</h3><canvas id="chartBrowser" height="180"></canvas></div>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-dark-800/50 text-gray-400">
+                <tr>
+                  <th class="text-left p-3">Device ID</th><th class="text-left p-3">Platform</th><th class="text-left p-3">OS</th>
+                  <th class="text-left p-3">Browser</th><th class="text-left p-3">Resolution</th><th class="text-left p-3">Last Seen</th><th class="text-left p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="devTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= ANALYTICS ============= -->
+      <section id="page-analytics" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Analytics</h2>
+          <p class="text-gray-400 text-sm">Statistics based on simulated data</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Today Visitors</p><p class="text-xl font-bold mt-1" id="aToday">3,847</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Weekly</p><p class="text-xl font-bold mt-1" id="aWeekly">22,489</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Avg Session</p><p class="text-xl font-bold mt-1">7m 12s</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Bounce Rate</p><p class="text-xl font-bold mt-1 text-acc-yellow">18.2%</p></div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-3">7-Day Activity</h3><canvas id="chart7d" height="180"></canvas></div>
+          <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-3">Top Countries</h3><canvas id="chartCountry" height="180"></canvas></div>
+        </div>
+      </section>
+
+      <!-- ============= SECURITY ============= -->
+      <section id="page-security" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Security Center</h2>
+          <p class="text-gray-400 text-sm">Simulation environment status</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-4">System Status</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between items-center"><span class="text-gray-400">System Health</span><span class="text-acc-green">99.9%</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">Firewall</span><span class="text-acc-green">ACTIVE</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">Data Encryption</span><span class="text-acc-green">AES-256</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">External Access</span><span class="text-acc-red">BLOCKED</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">Data Collection</span><span class="text-acc-red">DISABLED</span></div>
+              <div class="flex justify-between items-center"><span class="text-gray-400">Mode</span><span class="text-acc-yellow">SIMULATION ONLY</span></div>
+            </div>
+          </div>
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-4">Security Checks</h3>
+            <div class="space-y-3 text-sm">
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> Integrity check passed</p>
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> Simulation env verified</p>
+              <p class="text-acc-yellow"><i class="fa-solid fa-info-circle mr-2"></i> No external connection — expected</p>
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> Local storage secured</p>
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> No sensitive data collected</p>
+              <p class="text-acc-green"><i class="fa-solid fa-check-circle mr-2"></i> CSP headers active</p>
+            </div>
+          </div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <h3 class="font-semibold mb-4">Threat Detection</h3>
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="text-center p-3 bg-acc-green/10 rounded-lg">
+              <p class="text-2xl font-bold text-acc-green">0</p>
+              <p class="text-xs text-gray-400">Active Threats</p>
+            </div>
+            <div class="text-center p-3 bg-acc-yellow/10 rounded-lg">
+              <p class="text-2xl font-bold text-acc-yellow">3</p>
+              <p class="text-xs text-gray-400">Warnings</p>
+            </div>
+            <div class="text-center p-3 bg-acc-blue/10 rounded-lg">
+              <p class="text-2xl font-bold text-acc-blue">12</p>
+              <p class="text-xs text-gray-400">Events Monitored</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= DATABASE ============= -->
+      <section id="page-database" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Database Center</h2>
+          <p class="text-gray-400 text-sm">Local demo storage</p>
+        </div>
+        <div class="grid md:grid-cols-4 gap-4 mb-6">
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Status</p><p class="font-bold mt-1 text-acc-green">LOCAL DEMO</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Records</p><p class="font-bold mt-1" id="dbRecs">5,423</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Storage</p><p class="font-bold mt-1">3.8 MB</p></div>
+          <div class="glass rounded-xl p-4"><p class="text-xs text-gray-400">Last Sync</p><p class="font-bold mt-1">Just now</p></div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <h3 class="font-semibold mb-4">Collections</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-users text-acc-blue mr-2"></i> Accounts</span>
+              <span class="text-sm text-gray-400" id="colAcc">1,428</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-eye text-acc-green mr-2"></i> Visitors</span>
+              <span class="text-sm text-gray-400" id="colVis">3,847</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-mobile-screen text-acc-purple mr-2"></i> Devices</span>
+              <span class="text-sm text-gray-400" id="colDev">1,205</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-file-code text-acc-yellow mr-2"></i> Pages</span>
+              <span class="text-sm text-gray-400" id="colPages">124</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-dark-800/50 rounded-lg">
+              <span><i class="fa-solid fa-clock-rotate-left text-acc-cyan mr-2"></i> Logs</span>
+              <span class="text-sm text-gray-400">12,893</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-5">
+            <button id="dbClear" class="bg-acc-red/10 text-acc-red px-3 py-2 rounded-lg text-sm hover:bg-acc-red/20"><i class="fa-solid fa-database"></i> Clear All</button>
+            <button id="dbExport" class="bg-acc-blue/10 text-acc-blue px-3 py-2 rounded-lg text-sm hover:bg-acc-blue/20"><i class="fa-solid fa-download"></i> Export JSON</button>
+            <button id="dbImport" class="bg-acc-green/10 text-acc-green px-3 py-2 rounded-lg text-sm hover:bg-acc-green/20"><i class="fa-solid fa-upload"></i> Import</button>
+            <button id="dbRefresh" class="bg-gray-700/50 px-3 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fa-solid fa-rotate"></i> Refresh</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= REPORTS ============= -->
+      <section id="page-reports" class="page p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold">Report Center</h2>
+          <p class="text-gray-400 text-sm">Generate demo reports instantly</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="glass rounded-xl p-5">
+            <h3 class="font-semibold mb-3">Available Reports</h3>
+            <div class="space-y-3">
+              <div class="p-3 bg-dark-800/50 rounded-lg flex justify-between items-center">
+                <span>Daily Activity Summary</span>
+                <button class="gen-report bg-acc-blue/10 text-acc-blue px-2 py-1 rounded text-xs" data-t="daily">Generate</button>
+              </div>
+              <div class="p-3 bg-dark-800/50 rounded-lg flex justify-between items-center">
+                <span>Weekly Analytics</span>
+                <button class
